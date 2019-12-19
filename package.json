@@ -1,0 +1,19 @@
+{
+	"name": "actor-hm-scraper",
+	"version": "0.0.1",
+	"description": "This is a boilerplate of an Apify actor.",
+	"dependencies": {
+		"apify": "^0.17.0",
+		"jsdom": "^15.2.1"
+	},
+	"devDependencies": {
+		"@apify/eslint-config": "0.0.3",
+		"eslint": "^6.7.2"
+	},
+	"scripts": {
+		"start": "node src/main.js",
+		"test": "echo \"Error: oops, the actor has no tests yet, sad!\" && exit 1"
+	},
+	"author": "It's not you it's me",
+	"license": "ISC"
+}
