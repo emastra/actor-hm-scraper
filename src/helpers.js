@@ -79,10 +79,11 @@ function getUtagData($) {
     return utagData;
 }
 
-async function getAvailabilityList(groupCode) {
+async function getAvailabilityList(groupCode, proxyUrls) {
     const { body } = await requestAsBrowser({
         url: `https://www2.hm.com/hmwebservices/service/product/us/availability/${groupCode}.json`,
         abortFunction: false,
+        proxyUrl: proxyUrls[0]
     });
     const parsedBody = JSON.parse(body);
     const availability = parsedBody.availability.concat(parsedBody.fewPieceLeft);

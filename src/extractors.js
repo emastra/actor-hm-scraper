@@ -95,7 +95,7 @@ async function extractSubcatPage($, request, proxyUrls) {
     return productLinks;
 }
 
-async function extractProductPage($, request) {
+async function extractProductPage($, request, proxyUrls) {
     // get productData
     const productData = getProductData($);
     // get utagData // INVECE CHE UTAG, potrei prendere category in extractSubcatPage e passarlo come userData
@@ -112,7 +112,7 @@ async function extractProductPage($, request) {
     const product = productData[itemId];
 
     // get availability list
-    const availability = await getAvailabilityList(groupCode);
+    const availability = await getAvailabilityList(groupCode, proxyUrls);
 
     const items = [];
 

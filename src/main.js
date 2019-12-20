@@ -96,7 +96,7 @@ Apify.main(async () => {
             }
 
             if (label === 'PRODUCT') {
-                let item = await extractProductPage($, request);
+                let item = await extractProductPage($, request, proxyUrls);
 
                 if (extendOutputFunction)
                     item = await applyFunction($, evaledFunc, item);
