@@ -78,8 +78,8 @@ async function extractSubcatPage($, request, proxyUrls) {
     console.log(request.url, 'total', total);
 
     // get all products by chunks
-    const data = await getAllProductsByChunks(total, apiUrl, isViewAll, proxyUrls);
-    const { products } = data;
+    const products = await getAllProductsByChunks(total, apiUrl, isViewAll, proxyUrls);
+    console.log('PRODUCTS FROM GETALLPRODUCTSBYCHUNK:', products.length);
 
     const productLinks = [];
 
@@ -127,7 +127,7 @@ async function extractProductPage($, request, proxyUrls) {
     item.title = schemaObject.name;
     item.categories = utagData.product_category[0].split('_').map(s => s.toLowerCase());
     item.description = product.description;
-    item.composition = product.compositions.join(', '); // ? null
+    item.composition = product.compositions ? product.compositions.join(', ') : null;
     item.price = product.promoMarkerLegalText ? product.promoMarkerLegalText : product.promoMarkerLabelText;
     item.salePrice = product.promoMarkerLabelText;
     item.currency = schemaObject.offers[0].priceCurrency;

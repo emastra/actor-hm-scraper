@@ -18,7 +18,8 @@ async function getTotalNumOfProds(apiUrl, isViewAll, proxyUrls) {
     const res = await requestAsBrowser({
         url: apiUrl + (isViewAll ? '?' : '&') + `page-size=${PAGE_SIZE}`,
         abortFunction: false,
-        proxyUrl: proxyUrls[0]
+        proxyUrl: proxyUrls[0],
+        timeoutSecs: 120
     });
     const { total } = JSON.parse(res.body);
 
@@ -26,7 +27,7 @@ async function getTotalNumOfProds(apiUrl, isViewAll, proxyUrls) {
 }
 
 async function getAllProductsByChunks(total, apiUrl, isViewAll, proxyUrls) {
-    let data = Object.create(null);
+    let productsArray = [];
     const numOfReqs = Math.ceil(total / PAGE_SIZE);
 
     for (let i = 0; i < numOfReqs; i++) {
@@ -35,30 +36,40 @@ async function getAllProductsByChunks(total, apiUrl, isViewAll, proxyUrls) {
         const res = await requestAsBrowser({
             url: apiUrl + (isViewAll ? '?' : '&') + `offset=${offset}&page-size=${PAGE_SIZE}`,
             abortFunction: false,
-            proxyUrl: proxyUrls[0]
+            proxyUrl: proxyUrls[0],
+            timeoutSecs: 120
         });
         console.log('req', i, apiUrl + (isViewAll ? '?' : '&') + `offset=${offset}&page-size=${PAGE_SIZE}`);
 
         const resData = JSON.parse(res.body);
-        data = { ...data, ...resData };
+        const { products } = resData;
+
+        productsArray.push(...products);
 
         await sleep(1000);
     }
 
-    return data;
+    return productsArray;
 }
 
 function getProductData($) {
     // init following variable to support eval
     const isDesktop = true;
 
-    const scriptContent = $('script:contains("var productArticleDetails")').html();
-    const start = scriptContent.indexOf('var productArticleDetails = '); // + 28
-    const end = scriptContent.length;
-    const dataString = scriptContent.substr(start, end);
-    dataString.trim();
-    eval(dataString); // creates productArticleDetails variable
-    const productData = productArticleDetails;
+    let productData;
+
+    try {
+        const scriptContent = $('script:contains("var productArticleDetails")').html();
+        const start = scriptContent.indexOf('var productArticleDetails = '); // + 28
+        const end = scriptContent.length;
+        const dataString = scriptContent.substr(start, end);
+        dataString.trim();
+        eval(dataString); // creates productArticleDetails variable
+        productData = productArticleDetails;
+    }
+    catch (err) {
+        throw new Error('Web page missing critical data source');
+    }
 
     return productData;
 }
@@ -68,13 +79,20 @@ function getUtagData($) {
     const [osaArea, osaType, virtualCategory] = Array(3).fill(undefined);
     const [getTouchpoint, utagTealiumTrack] = Array(2).fill(() => undefined);
 
-    const scriptContent = $('script:contains("utag_data = ")').html();
-    const start = scriptContent.indexOf('utag_data = ');
-    let dataString = scriptContent.substr(start);
-    const end = dataString.indexOf('};') + 2;
-    dataString = dataString.substr(0, end);
-    eval(dataString); // creates utag_data variable
-    const utagData = utag_data;
+    let utagData;
+
+    try {
+        const scriptContent = $('script:contains("utag_data = ")').html();
+        const start = scriptContent.indexOf('utag_data = ');
+        let dataString = scriptContent.substr(start);
+        const end = dataString.indexOf('};') + 2;
+        dataString = dataString.substr(0, end);
+        eval(dataString); // creates utag_data variable
+        utagData = utag_data;
+    }
+    catch (err) {
+        throw new Error('Web page missing critical data source');
+    }
 
     return utagData;
 }
@@ -83,7 +101,8 @@ async function getAvailabilityList(groupCode, proxyUrls) {
     const { body } = await requestAsBrowser({
         url: `https://www2.hm.com/hmwebservices/service/product/us/availability/${groupCode}.json`,
         abortFunction: false,
-        proxyUrl: proxyUrls[0]
+        proxyUrl: proxyUrls[0],
+        timeoutSecs: 120
     });
     const parsedBody = JSON.parse(body);
     const availability = parsedBody.availability.concat(parsedBody.fewPieceLeft);
