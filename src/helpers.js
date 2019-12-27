@@ -71,8 +71,8 @@ function getProductData($) {
         productData = productArticleDetails;
     }
     catch (err) {
-        console.log('scriptContent', $('script:contains("var productArticleDetails")'));
-        console.log('scriptContent html', $('script:contains("var productArticleDetails")').html().slice(0,300));
+        // console.log('scriptContent', $('script:contains("var productArticleDetails")'));
+        console.log('scriptContent html', $($('script:contains("var productArticleDetails")')).html().slice(0,300));
         console.log('script find!', $.find('script:contains("var productArticleDetails")')[0]);
         throw new Error('Web page missing critical data source');
     }
