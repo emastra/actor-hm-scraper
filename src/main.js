@@ -59,6 +59,7 @@ Apify.main(async () => {
         maxRequestRetries: 3,
         handlePageTimeoutSecs: 360,
         requestTimeoutSecs: 180,
+        maxConcurrency: 40,
         proxyUrls,
 
         handlePageFunction: async ({ request, body, $ }) => {
@@ -83,20 +84,22 @@ Apify.main(async () => {
             }
 
             if (label === 'SUBCAT') {
-                const productLinks = await extractSubcatPage($, request, proxyUrls);
+                const productInfo = await extractSubcatPage($, request, proxyUrls);
 
-                for (const link of productLinks) {
+                for (const obj of productInfo) {
                     await requestQueue.addRequest({
-                        url: BASE_URL + link,
-                        userData: { label: 'PRODUCT' },
+                        url: BASE_URL + obj.link,
+                        userData: { label: 'PRODUCT', category: obj.category },
                     });
                 }
 
-                log.info(`Added ${productLinks.length} products from ${request.url}`);
+                log.info(`Added ${productInfo.length} products from ${request.url}`);
             }
 
             if (label === 'PRODUCT') {
-                let item = await extractProductPage($, request, proxyUrls);
+                const { category } = request.userData;
+
+                let item = await extractProductPage($, request, proxyUrls, category);
 
                 if (extendOutputFunction)
                     item = await applyFunction($, evaledFunc, item);

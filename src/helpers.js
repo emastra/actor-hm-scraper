@@ -19,7 +19,8 @@ async function getTotalNumOfProds(apiUrl, isViewAll, proxyUrls) {
         url: apiUrl + (isViewAll ? '?' : '&') + `page-size=${PAGE_SIZE}`,
         abortFunction: false,
         proxyUrl: proxyUrls[0],
-        timeoutSecs: 120
+        timeoutSecs: 120,
+        ignoreSslErrors: true
     });
     const { total } = JSON.parse(res.body);
 
@@ -37,7 +38,8 @@ async function getAllProductsByChunks(total, apiUrl, isViewAll, proxyUrls) {
             url: apiUrl + (isViewAll ? '?' : '&') + `offset=${offset}&page-size=${PAGE_SIZE}`,
             abortFunction: false,
             proxyUrl: proxyUrls[0],
-            timeoutSecs: 120
+            timeoutSecs: 120,
+            ignoreSslErrors: true
         });
         console.log('req', i, apiUrl + (isViewAll ? '?' : '&') + `offset=${offset}&page-size=${PAGE_SIZE}`);
 
@@ -59,7 +61,8 @@ function getProductData($) {
     let productData;
 
     try {
-        const scriptContent = $('script:contains("var productArticleDetails")').html();
+        // if script is null, I can try $.find('script:contains("var productArticleDetails")')[0]; !!!
+        const scriptContent = $('script:contains("var productArticleDetails")').html(); // !!!!!!!!!! $($.find('script:contains("var productArticleDetails")')[0]).html()
         const start = scriptContent.indexOf('var productArticleDetails = '); // + 28
         const end = scriptContent.length;
         const dataString = scriptContent.substr(start, end);
@@ -68,6 +71,9 @@ function getProductData($) {
         productData = productArticleDetails;
     }
     catch (err) {
+        console.log('scriptContent', $('script:contains("var productArticleDetails")'));
+        console.log('scriptContent html', $('script:contains("var productArticleDetails")').html().slice(0,300));
+        console.log('script find!', $.find('script:contains("var productArticleDetails")')[0]);
         throw new Error('Web page missing critical data source');
     }
 
@@ -102,7 +108,8 @@ async function getAvailabilityList(groupCode, proxyUrls) {
         url: `https://www2.hm.com/hmwebservices/service/product/us/availability/${groupCode}.json`,
         abortFunction: false,
         proxyUrl: proxyUrls[0],
-        timeoutSecs: 120
+        timeoutSecs: 120,
+        ignoreSslErrors: true
     });
     const parsedBody = JSON.parse(body);
     const availability = parsedBody.availability.concat(parsedBody.fewPieceLeft);

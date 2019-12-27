@@ -81,27 +81,29 @@ async function extractSubcatPage($, request, proxyUrls) {
     const products = await getAllProductsByChunks(total, apiUrl, isViewAll, proxyUrls);
     console.log('PRODUCTS FROM GETALLPRODUCTSBYCHUNK:', products.length);
 
-    const productLinks = [];
+    const productInfo = [];
 
     for (const product of products) {
-        const { swatches } = product;
+        const { category, swatches } = product;
 
         for (const swatch of swatches) {
-            productLinks.push(swatch.articleLink);
+            // productLinks.push(swatch.articleLink);
+            productInfo.push({ link: swatch.articleLink, category });
         }
     }
 
-    console.log(request.url, 'length', productLinks.length);
-    return productLinks;
+    console.log(request.url, 'length', productInfo.length);
+    return productInfo;
 }
 
-async function extractProductPage($, request, proxyUrls) {
+async function extractProductPage($, request, proxyUrls, category = null) {
     // get productData
     const productData = getProductData($);
-    // get utagData // INVECE CHE UTAG, potrei prendere category in extractSubcatPage e passarlo come userData
-    const utagData = getUtagData($);
     // get schema.org data
     const schemaObject = JSON.parse($($('script[type="application/ld+json"]')[0]).text().trim());
+    // get utagData
+    let utagData;
+    if (!category) utagData = getUtagData($);
 
     const itemId = request.url.match(/[0-9]{8,12}/)[0];
 
@@ -125,7 +127,7 @@ async function extractProductPage($, request, proxyUrls) {
     item.scrapedAt = new Date().toISOString();
     item.brand = schemaObject.brand.name.replace(/&amp;/g, '&');
     item.title = schemaObject.name;
-    item.categories = utagData.product_category[0].split('_').map(s => s.toLowerCase());
+    item.categories = category ? category.split('_').map(s => s.toLowerCase()) : utagData.product_category[0].split('_').map(s => s.toLowerCase());
     item.description = product.description;
     item.composition = product.compositions ? product.compositions.join(', ') : null;
     item.price = product.promoMarkerLegalText ? product.promoMarkerLegalText : product.promoMarkerLabelText;
