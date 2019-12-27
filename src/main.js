@@ -58,7 +58,7 @@ Apify.main(async () => {
         requestQueue,
         maxRequestRetries: 3,
         handlePageTimeoutSecs: 360,
-        requestTimeoutSecs: 180,
+        requestTimeoutSecs: 240,
         maxConcurrency: 40,
         proxyUrls,
 

@@ -19,7 +19,7 @@ async function getTotalNumOfProds(apiUrl, isViewAll, proxyUrls) {
         url: apiUrl + (isViewAll ? '?' : '&') + `page-size=${PAGE_SIZE}`,
         abortFunction: false,
         proxyUrl: proxyUrls[0],
-        timeoutSecs: 120,
+        timeoutSecs: 180,
         ignoreSslErrors: true
     });
     const { total } = JSON.parse(res.body);
@@ -38,7 +38,7 @@ async function getAllProductsByChunks(total, apiUrl, isViewAll, proxyUrls) {
             url: apiUrl + (isViewAll ? '?' : '&') + `offset=${offset}&page-size=${PAGE_SIZE}`,
             abortFunction: false,
             proxyUrl: proxyUrls[0],
-            timeoutSecs: 120,
+            timeoutSecs: 180,
             ignoreSslErrors: true
         });
         console.log('req', i, apiUrl + (isViewAll ? '?' : '&') + `offset=${offset}&page-size=${PAGE_SIZE}`);
@@ -108,7 +108,7 @@ async function getAvailabilityList(groupCode, proxyUrls) {
         url: `https://www2.hm.com/hmwebservices/service/product/us/availability/${groupCode}.json`,
         abortFunction: false,
         proxyUrl: proxyUrls[0],
-        timeoutSecs: 120,
+        timeoutSecs: 180,
         ignoreSslErrors: true
     });
     const parsedBody = JSON.parse(body);
