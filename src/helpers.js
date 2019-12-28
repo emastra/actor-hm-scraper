@@ -61,8 +61,11 @@ function getProductData($) {
     let productData;
 
     try {
-        // if script is null, I can try $.find('script:contains("var productArticleDetails")')[0]; !!!
-        const scriptContent = $('script:contains("var productArticleDetails")').html(); // !!!!!!!!!! $($.find('script:contains("var productArticleDetails")')[0]).html()
+        const scriptTag = $('script:contains("var productArticleDetails")')
+            ? $('script:contains("var productArticleDetails")')
+            : $($.find('script:contains("var productArticleDetails")')[0]);
+
+        const scriptContent = scriptTag.html();
         const start = scriptContent.indexOf('var productArticleDetails = '); // + 28
         const end = scriptContent.length;
         const dataString = scriptContent.substr(start, end);
@@ -71,9 +74,6 @@ function getProductData($) {
         productData = productArticleDetails;
     }
     catch (err) {
-        // console.log('scriptContent', $('script:contains("var productArticleDetails")'));
-        console.log('scriptContent html', $($('script:contains("var productArticleDetails")')).html().slice(0,300));
-        console.log('script find!', $.find('script:contains("var productArticleDetails")')[0]);
         throw new Error('Web page missing critical data source');
     }
 
@@ -103,16 +103,24 @@ function getUtagData($) {
     return utagData;
 }
 
-async function getAvailabilityList(groupCode, proxyUrls) {
-    const { body } = await requestAsBrowser({
-        url: `https://www2.hm.com/hmwebservices/service/product/us/availability/${groupCode}.json`,
-        abortFunction: false,
-        proxyUrl: proxyUrls[0],
-        timeoutSecs: 180,
-        ignoreSslErrors: true
-    });
-    const parsedBody = JSON.parse(body);
-    const availability = parsedBody.availability.concat(parsedBody.fewPieceLeft);
+async function getAvailabilityList(groupCode, proxyUrls, count = 0) {
+    if (count > 1) throw new Error('Web page missing critical data source');
+    let availability;
+
+    try {
+        const { body } = await requestAsBrowser({
+            url: `https://www2.hm.com/hmwebservices/service/product/us/availability/${groupCode}.json`,
+            abortFunction: false,
+            proxyUrl: proxyUrls[0],
+            timeoutSecs: 180,
+            ignoreSslErrors: true,
+            json: true
+        });
+
+        availability = body.availability.concat(body.fewPieceLeft);
+    } catch (err) {
+        availability = await getAvailabilityList(groupCode, proxyUrls, count+1);
+    }
 
     return availability;
 }
