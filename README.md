@@ -110,7 +110,7 @@ Example of one item output:
 ### Compute units consumption
 The actor uses [CheerioCrawler](https://sdk.apify.com/docs/api/cheeriocrawler) which has low consumption.
 
-With 4096MB of RAM set for the actor, Expected compute units per **1000** scraped pages: **0.3199**
+With 4096MB of RAM set for the actor, expected compute units per **1000** scraped pages: **0.3199**
 
 Keep in mind that it is much more efficient to run one longer scrape (at least one minute) than more shorter ones because of the startup time.
 
