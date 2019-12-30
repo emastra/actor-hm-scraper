@@ -1,4 +1,5 @@
 const Apify = require('apify');
+
 const { log } = Apify.utils;
 
 const { BASE_URL } = require('./constants');
@@ -9,7 +10,7 @@ const {
     getAllProductsByChunks,
     getProductData,
     getUtagData,
-    getAvailabilityList
+    getAvailabilityList,
 } = require('./helpers');
 
 
@@ -19,9 +20,9 @@ async function enqueueMainCategories($, requestQueue) {
     for (const anchor of menuAnchors) {
         const info = await requestQueue.addRequest({
             url: BASE_URL + $(anchor).attr('href'),
-            userData: { label: 'MAINCAT' }
+            userData: { label: 'MAINCAT' },
         });
-        console.log(info.request.url);
+        log.info(info.request.url);
     }
 
     return menuAnchors.length;
@@ -32,30 +33,24 @@ async function enqueueSubcategories($, requestQueue) {
 
     // standard main-cat, "View All" is just one
     if (viewAllAnchor.length === 1) {
-        const info = await requestQueue.addRequest({
+        await requestQueue.addRequest({
             url: BASE_URL + viewAllAnchor.attr('href'),
             forefront: true,
-            userData: { label: 'SUBCAT' }
+            userData: { label: 'SUBCAT' },
         });
-
-        return 'View All';
     }
-
     // "sale" main-cat, "View All" are several
     else {
         const anchors = viewAllAnchor.toArray();
 
         for (const anchor of anchors) {
-            const info = await requestQueue.addRequest({
+            await requestQueue.addRequest({
                 url: BASE_URL + $(anchor).attr('href'),
                 forefront: true,
-                userData: { label: 'SUBCAT' }
+                userData: { label: 'SUBCAT' },
             });
         }
-
-        return `${anchors.length} subcategories`;
     }
-
 }
 
 async function extractSubcatPage($, request, proxyUrls) {
@@ -75,11 +70,9 @@ async function extractSubcatPage($, request, proxyUrls) {
 
     // get total
     const total = await getTotalNumOfProds(apiUrl, isViewAll, proxyUrls);
-    console.log(request.url, 'total', total);
 
     // get all products by chunks
     const products = await getAllProductsByChunks(total, apiUrl, isViewAll, proxyUrls);
-    console.log('PRODUCTS FROM GETALLPRODUCTSBYCHUNK:', products.length);
 
     const productInfo = [];
 
@@ -92,7 +85,6 @@ async function extractSubcatPage($, request, proxyUrls) {
         }
     }
 
-    console.log(request.url, 'length', productInfo.length);
     return productInfo;
 }
 
@@ -103,7 +95,9 @@ async function extractProductPage($, request, proxyUrls, category = null) {
     const schemaObject = JSON.parse($($('script[type="application/ld+json"]')[0]).text().trim());
     // get utagData
     let utagData;
-    if (!category) utagData = getUtagData($);
+    if (!category) {
+        utagData = getUtagData($);
+    }
 
     const itemId = request.url.match(/[0-9]{8,12}/)[0];
 
@@ -116,8 +110,6 @@ async function extractProductPage($, request, proxyUrls, category = null) {
     // get availability list
     const availability = await getAvailabilityList(groupCode, proxyUrls);
 
-    const items = [];
-
     // create item
     const item = Object.create(null);
 
@@ -128,10 +120,11 @@ async function extractProductPage($, request, proxyUrls, category = null) {
     item.brand = schemaObject.brand.name.replace(/&amp;/g, '&');
     item.title = schemaObject.name;
     item.categories = category ? category.split('_').map(s => s.toLowerCase()) : utagData.product_category[0].split('_').map(s => s.toLowerCase());
+    // item.categories = category.split('_').map(s => s.toLowerCase()); // ternary if null???????????
     item.description = product.description;
     item.composition = product.compositions ? product.compositions.join(', ') : null;
-    item.price = product.promoMarkerLegalText ? product.promoMarkerLegalText : product.promoMarkerLabelText;
-    item.salePrice = product.promoMarkerLabelText;
+    item.price = product.whitePriceValue ? Number(product.whitePriceValue) : Number(product.promoMarkerLabelText.replace('$', ''));
+    item.salePrice = product.redPriceValue ? Number(product.redPriceValue) : item.price;
     item.currency = schemaObject.offers[0].priceCurrency;
     item.color = product.name;
     item.sizes = product.sizes.map(size => size.name).filter(name => name !== '');

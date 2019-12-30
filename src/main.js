@@ -1,4 +1,5 @@
 const Apify = require('apify');
+
 const { log } = Apify.utils;
 
 const { BASE_URL } = require('./constants');
@@ -33,8 +34,7 @@ Apify.main(async () => {
     } = input;
 
     // create proxy url(s) to be used in crawler configuration
-    const proxyUrls = getProxyUrls(proxyConfiguration, true); // const proxyUrls = undefined;
-    console.log('proxyUrls', proxyUrls);
+    const proxyUrls = getProxyUrls(proxyConfiguration, true);
 
     // initialize request list from url sources
     const sources = checkAndCreateUrlSource(startUrls);
@@ -49,8 +49,7 @@ Apify.main(async () => {
 
     // if exists, evaluate extendOutputFunction
     let evaledFunc;
-    if (extendOutputFunction)
-        evaledFunc = checkAndEval(extendOutputFunction);
+    if (extendOutputFunction) evaledFunc = checkAndEval(extendOutputFunction);
 
     // crawler config
     const crawler = new Apify.CheerioCrawler({
@@ -59,12 +58,12 @@ Apify.main(async () => {
         maxRequestRetries: 3,
         handlePageTimeoutSecs: 360,
         requestTimeoutSecs: 240,
-        maxConcurrency: 40,
+        maxConcurrency: 20,
         proxyUrls,
 
         handlePageFunction: async ({ request, body, $ }) => {
             // if exists, check items limit. If limit is reached crawler will exit.
-            if (maxItems) maxItemsCheck(maxItems, itemCount, requestQueue);
+            if (maxItems) maxItemsCheck(maxItems, itemCount);
 
             log.info('Processing:', request.url);
             const { label } = request.userData;
@@ -73,14 +72,12 @@ Apify.main(async () => {
 
             if (label === 'HOMEPAGE') {
                 const totalEnqueued = await enqueueMainCategories($, requestQueue);
-
                 log.info(`Enqueued ${totalEnqueued} main-categories from the homepage.`);
             }
 
             if (label === 'MAINCAT') {
-                const enqueuedUrl = await enqueueSubcategories($, requestQueue);
-
-                log.info(`Enqueued ${enqueuedUrl} from ${request.url}`);
+                await enqueueSubcategories($, requestQueue);
+                log.info(`Enqueued subcategories from ${request.url}`);
             }
 
             if (label === 'SUBCAT') {
@@ -101,8 +98,7 @@ Apify.main(async () => {
 
                 let item = await extractProductPage($, request, proxyUrls, category);
 
-                if (extendOutputFunction)
-                    item = await applyFunction($, evaledFunc, item);
+                if (extendOutputFunction) item = await applyFunction($, evaledFunc, item);
 
                 await dataset.pushData(item);
                 itemCount++;

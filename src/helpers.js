@@ -1,4 +1,5 @@
 const Apify = require('apify');
+
 const { log, requestAsBrowser, sleep } = Apify.utils;
 
 const { BASE_URL, PAGE_SIZE } = require('./constants');
@@ -9,18 +10,17 @@ function constructApiUrl(isViewAll, dataProductsUrl, productType) {
 
     if (isViewAll) apiUrl = `${BASE_URL}${dataProductsUrl}`;
     else apiUrl = `${BASE_URL}${dataProductsUrl}?product-type=${productType}`;
-    console.log('apiUrl', apiUrl);
 
     return apiUrl;
 }
 
 async function getTotalNumOfProds(apiUrl, isViewAll, proxyUrls) {
     const res = await requestAsBrowser({
-        url: apiUrl + (isViewAll ? '?' : '&') + `page-size=${PAGE_SIZE}`,
+        url: `${apiUrl + (isViewAll ? '?' : '&')}page-size=${PAGE_SIZE}`,
         abortFunction: false,
         proxyUrl: proxyUrls[0],
         timeoutSecs: 180,
-        ignoreSslErrors: true
+        ignoreSslErrors: true,
     });
     const { total } = JSON.parse(res.body);
 
@@ -28,20 +28,21 @@ async function getTotalNumOfProds(apiUrl, isViewAll, proxyUrls) {
 }
 
 async function getAllProductsByChunks(total, apiUrl, isViewAll, proxyUrls) {
-    let productsArray = [];
+    const productsArray = [];
     const numOfReqs = Math.ceil(total / PAGE_SIZE);
 
+    log.info('Paginating...');
     for (let i = 0; i < numOfReqs; i++) {
         const offset = i * PAGE_SIZE;
 
         const res = await requestAsBrowser({
-            url: apiUrl + (isViewAll ? '?' : '&') + `offset=${offset}&page-size=${PAGE_SIZE}`,
+            url: `${apiUrl + (isViewAll ? '?' : '&')}offset=${offset}&page-size=${PAGE_SIZE}`,
             abortFunction: false,
             proxyUrl: proxyUrls[0],
             timeoutSecs: 180,
-            ignoreSslErrors: true
+            ignoreSslErrors: true,
         });
-        console.log('req', i, apiUrl + (isViewAll ? '?' : '&') + `offset=${offset}&page-size=${PAGE_SIZE}`);
+        // console.log('req', i, apiUrl + (isViewAll ? '?' : '&') + `offset=${offset}&page-size=${PAGE_SIZE}`);
 
         const resData = JSON.parse(res.body);
         const { products } = resData;
@@ -72,8 +73,7 @@ function getProductData($) {
         dataString.trim();
         eval(dataString); // creates productArticleDetails variable
         productData = productArticleDetails;
-    }
-    catch (err) {
+    } catch (err) {
         throw new Error('Web page missing critical data source');
     }
 
@@ -88,15 +88,18 @@ function getUtagData($) {
     let utagData;
 
     try {
-        const scriptContent = $('script:contains("utag_data = ")').html();
+        const scriptTag = $('script:contains("utag_data = ")')
+            ? $('script:contains("utag_data = ")')
+            : $($.find('script:contains("utag_data = ")')[0]);
+
+        const scriptContent = scriptTag.html();
         const start = scriptContent.indexOf('utag_data = ');
         let dataString = scriptContent.substr(start);
         const end = dataString.indexOf('};') + 2;
         dataString = dataString.substr(0, end);
         eval(dataString); // creates utag_data variable
         utagData = utag_data;
-    }
-    catch (err) {
+    } catch (err) {
         throw new Error('Web page missing critical data source');
     }
 
@@ -114,12 +117,12 @@ async function getAvailabilityList(groupCode, proxyUrls, count = 0) {
             proxyUrl: proxyUrls[0],
             timeoutSecs: 180,
             ignoreSslErrors: true,
-            json: true
+            json: true,
         });
 
         availability = body.availability.concat(body.fewPieceLeft);
     } catch (err) {
-        availability = await getAvailabilityList(groupCode, proxyUrls, count+1);
+        availability = await getAvailabilityList(groupCode, proxyUrls, count + 1);
     }
 
     return availability;
@@ -131,5 +134,5 @@ module.exports = {
     getAllProductsByChunks,
     getProductData,
     getUtagData,
-    getAvailabilityList
-}
+    getAvailabilityList,
+};

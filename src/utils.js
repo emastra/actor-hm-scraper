@@ -59,35 +59,34 @@ function checkAndCreateUrlSource(startUrls) {
 
     const subcats = [
         '/products', '/new-arrivals', '/deals', '/seasonal-trending',
-        '/campaigns/', '/concepts', '/selected/', '/shop-by-room', '/sale/'
+        '/campaigns/', '/concepts', '/selected/', '/shop-by-room', '/sale/',
     ];
 
     for (const { url } of startUrls) {
         // if url is the homepage
         if (url === 'https://www2.hm.com/en_us/index.html') {
             sources.push({ url, userData: { label: 'HOMEPAGE' } });
-            console.log('HOMEPAGE', url);
+            log.info('HOMEPAGE', url);
         }
         // if product page
         else if (url.includes('productpage') || /[0-9]{8,12}/.test(url)) {
             sources.push({ url, userData: { label: 'PRODUCT' } });
-            console.log('PRODUCT', url);
+            log.info('PRODUCT', url);
         }
         // if sub-category page
         else if (subcats.some(el => url.includes(el))) {
             sources.push({ url, userData: { label: 'SUBCAT' } });
-            console.log('SUBCAT', url);
+            log.info('SUBCAT', url);
         }
         // if top-level category
         else if (url.replace(/http(s)?:\/\//, '').match(/\//g).length <= 2) {
             sources.push({ url, userData: { label: 'MAINCAT' } });
-            console.log('MAINCAT', url);  
-        }
-        else {
+            log.info('MAINCAT', url);
+        } else {
             // unsupported or bad formatted urls get here.
             log.warning(
                 `The following url has not been added to the queue: ${url}.
-                It may be due to unsupported or incorrect url. For more information, have a look at the actor documentation, "input" section.`
+                It may be due to unsupported or incorrect url. For more information, have a look at the actor documentation, "input" section.`,
             );
         }
     }
@@ -95,7 +94,7 @@ function checkAndCreateUrlSource(startUrls) {
     return sources;
 }
 
-function maxItemsCheck(maxItems, itemCount, requestQueue) {
+function maxItemsCheck(maxItems, itemCount) {
     if (itemCount >= maxItems) {
         log.info('Actor reached the max items limit. Crawler is going to halt...');
         log.info('Crawler Finished.');
