@@ -38,7 +38,7 @@ INPUT Example:
 
 ### Output
 
-Output is stored in a dataset. Each item is information about one product. A single product on the website produces an item for each color variant.
+Output is stored in a dataset. Each item is information about one product. Each color variant has a different product ID and produces a different item.
 
 Example of one item output:
 
