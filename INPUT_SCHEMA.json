@@ -30,7 +30,7 @@
       "type": "object",
       "editor": "proxy",
       "description": "The best option is usually Automatic proxy, but you can also use your own proxies or no proxy. Proxy's country defaults to 'US'.",
-      "default": { "useApifyProxy": true }
+      "prefill": { "useApifyProxy": true }
     }
   },
   "required": ["startUrls"]
