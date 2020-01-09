@@ -35,6 +35,7 @@ Apify.main(async () => {
 
     // create proxy url(s) to be used in crawler configuration
     const proxyUrls = getProxyUrls(proxyConfiguration, true);
+    if (!proxyUrls) log.warning('No proxy is configured');
 
     // initialize request list from url sources
     const sources = checkAndCreateUrlSource(startUrls);

@@ -29,19 +29,20 @@ async function enqueueMainCategories($, requestQueue) {
 }
 
 async function enqueueSubcategories($, requestQueue) {
-    const viewAllAnchor = $('#menu-links').find('a:contains("View All")');
+    const viewAllAnchor = $('#menu-links').find('a[role="menuitem"]').toArray()
+        .filter((a) => $(a).text().trim().toLowerCase() === 'view all');
 
     // standard main-cat, "View All" is just one
     if (viewAllAnchor.length === 1) {
         await requestQueue.addRequest({
-            url: BASE_URL + viewAllAnchor.attr('href'),
+            url: BASE_URL + $(viewAllAnchor[0]).attr('href'),
             forefront: true,
             userData: { label: 'SUBCAT' },
         });
     }
     // "sale" main-cat, "View All" are several
     else {
-        const anchors = viewAllAnchor.toArray();
+        const anchors = viewAllAnchor;
 
         for (const anchor of anchors) {
             await requestQueue.addRequest({
@@ -55,7 +56,6 @@ async function enqueueSubcategories($, requestQueue) {
 
 async function extractSubcatPage($, request, proxyUrls) {
     const dataCategory = $('article[data-category]')[0].attribs['data-category'];
-    // const productType = dataCategory.split('_').slice(0, 2).join('_');
 
     const productType = $('input[data-name="product-type"][checked]')[0]
         ? $('input[data-name="product-type"][checked]')[0].attribs.value
