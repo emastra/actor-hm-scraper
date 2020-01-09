@@ -83,15 +83,17 @@ Apify.main(async () => {
 
             if (label === 'SUBCAT') {
                 const productInfo = await extractSubcatPage($, request, proxyUrls);
+                const count = [];
 
                 for (const obj of productInfo) {
                     await requestQueue.addRequest({
                         url: BASE_URL + obj.link,
                         userData: { label: 'PRODUCT', category: obj.category },
                     });
+                    count.push(obj.link);
                 }
 
-                log.info(`Added ${productInfo.length} products from ${request.url}`);
+                log.info(`Added ${(new Set(count)).size} products from ${request.url}`);
             }
 
             if (label === 'PRODUCT') {
