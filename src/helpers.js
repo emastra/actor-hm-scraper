@@ -42,7 +42,6 @@ async function getAllProductsByChunks(total, apiUrl, isViewAll, proxyUrls) {
             timeoutSecs: 180,
             ignoreSslErrors: true,
         });
-        // console.log('req', i, apiUrl + (isViewAll ? '?' : '&') + `offset=${offset}&page-size=${PAGE_SIZE}`);
 
         const resData = JSON.parse(res.body);
         const { products } = resData;

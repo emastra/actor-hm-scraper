@@ -20,7 +20,6 @@ const {
     applyFunction,
 } = require('./utils');
 
-//
 
 Apify.main(async () => {
     const input = await Apify.getInput();

@@ -80,7 +80,6 @@ async function extractSubcatPage($, request, proxyUrls) {
         const { category, swatches } = product;
 
         for (const swatch of swatches) {
-            // productLinks.push(swatch.articleLink);
             productInfo.push({ link: swatch.articleLink, category });
         }
     }
@@ -120,7 +119,6 @@ async function extractProductPage($, request, proxyUrls, category = null) {
     item.brand = schemaObject.brand.name.replace(/&amp;/g, '&');
     item.title = schemaObject.name;
     item.categories = category ? category.split('_').map(s => s.toLowerCase()) : utagData.product_category[0].split('_').map(s => s.toLowerCase());
-    // item.categories = category.split('_').map(s => s.toLowerCase()); // ternary if null???????????
     item.description = product.description;
     item.composition = product.compositions ? product.compositions.join(', ') : null;
     item.price = product.whitePriceValue ? Number(product.whitePriceValue) : Number(product.promoMarkerLabelText.replace('$', ''));
