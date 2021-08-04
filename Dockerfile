@@ -2,7 +2,7 @@
 # the available images at https://sdk.apify.com/docs/guides/docker-images
 # You can also use any other image from Docker Hub.
 # The 16 represents the version of Node.js you want to use.
-FROM apify/actor-node:16
+FROM apify/actor-node:14
 
 # Second, copy just package.json and package-lock.json since it should be
 # the only file that affects "npm install" in the next step, to speed up the build
