@@ -29,7 +29,7 @@
       "title": "Proxy configuration",
       "type": "object",
       "editor": "proxy",
-      "description": "The best option is usually Automatic proxy, but you can also use your own proxies or no proxy. Proxy's country defaults to 'US'.",
+      "description": "Select proxies to be used by your crawler.",
       "prefill": { "useApifyProxy": true }
     }
   },
