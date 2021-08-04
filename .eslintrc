@@ -1,3 +1,7 @@
 {
-    "extends": ["@apify"]
-}
+    "extends": "@apify",
+    "rules":{
+      "linebreak-style": 0
+    }
+  }
+  

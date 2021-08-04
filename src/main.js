@@ -1,9 +1,7 @@
 const Apify = require('apify');
-
-const { log } = Apify.utils;
-
 const { BASE_URL } = require('./constants');
 
+const { log } = Apify.utils;
 const {
     enqueueMainCategories,
     enqueueSubcategories,
@@ -13,13 +11,11 @@ const {
 
 const {
     validateInput,
-    getProxyUrls,
     checkAndCreateUrlSource,
     maxItemsCheck,
     checkAndEval,
     applyFunction,
 } = require('./utils');
-
 
 Apify.main(async () => {
     const input = await Apify.getInput();
@@ -32,10 +28,7 @@ Apify.main(async () => {
         proxyConfiguration,
     } = input;
 
-    // create proxy url(s) to be used in crawler configuration
-    const proxyUrls = getProxyUrls(proxyConfiguration, true);
-    if (!proxyUrls) log.warning('No proxy is configured');
-
+    const sdkProxyConfiguration = await Apify.createProxyConfiguration(proxyConfiguration);
     // initialize request list from url sources
     const sources = checkAndCreateUrlSource(startUrls);
     const requestList = await Apify.openRequestList('start-list', sources);
@@ -55,20 +48,18 @@ Apify.main(async () => {
     const crawler = new Apify.CheerioCrawler({
         requestList,
         requestQueue,
-        maxRequestRetries: 3,
+        maxRequestRetries: 9, // there are blocks sometimes
         handlePageTimeoutSecs: 360,
         requestTimeoutSecs: 240,
         maxConcurrency: 20,
-        proxyUrls,
+        proxyConfiguration: sdkProxyConfiguration,
 
-        handlePageFunction: async ({ request, body, $ }) => {
+        handlePageFunction: async ({ request, $ }) => {
             // if exists, check items limit. If limit is reached crawler will exit.
             if (maxItems) maxItemsCheck(maxItems, itemCount);
 
-            log.info('Processing:', request.url);
+            log.info(`Processing: ${request.url}`);
             const { label } = request.userData;
-
-            //
 
             if (label === 'HOMEPAGE') {
                 const totalEnqueued = await enqueueMainCategories($, requestQueue);
@@ -81,9 +72,8 @@ Apify.main(async () => {
             }
 
             if (label === 'SUBCAT') {
-                const productInfo = await extractSubcatPage($, request, proxyUrls);
+                const productInfo = await extractSubcatPage($, request, sdkProxyConfiguration);
                 const count = [];
-
                 for (const obj of productInfo) {
                     await requestQueue.addRequest({
                         url: BASE_URL + obj.link,
@@ -91,26 +81,20 @@ Apify.main(async () => {
                     });
                     count.push(obj.link);
                 }
-
                 log.info(`Added ${(new Set(count)).size} products from ${request.url}`);
             }
 
             if (label === 'PRODUCT') {
                 const { category } = request.userData;
-
-                let item = await extractProductPage($, request, proxyUrls, category);
-
+                let item = await extractProductPage($, request, sdkProxyConfiguration, category);
                 if (extendOutputFunction) item = await applyFunction($, evaledFunc, item);
-
                 await dataset.pushData(item);
                 itemCount++;
-                log.info('Product pushed:', item.itemId, item.color);
+                log.info(`Product saved: ${item.itemId}`);
             }
         },
-
         handleFailedRequestFunction: async ({ request }) => {
             log.warning(`Request ${request.url} failed too many times`);
-
             await dataset.pushData({
                 '#debug': Apify.utils.createRequestDebugInfo(request),
             });

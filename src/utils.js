@@ -2,8 +2,6 @@ const Apify = require('apify');
 
 const { log } = Apify.utils;
 
-const { PROXY_DEFAULT_COUNTRY } = require('./constants');
-
 function validateInput(input) {
     if (!input) throw new Error('INPUT is missing.');
 
@@ -16,42 +14,21 @@ function validateInput(input) {
                 throw new Error(`Value of ${inputKey} should be array`);
             }
         } else if (value) {
+            // eslint-disable-next-line valid-typeof
             if (typeof value !== type) {
                 throw new Error(`Value of ${inputKey} should be ${type}`);
             }
         }
     };
-
     // check required field
     if (!input.startUrls && input.startUrls.length <= 0) {
         throw new Error('INPUT "startUrls" property is required');
     }
-
     // check correct types
     validate('startUrls', 'array');
     validate('maxItems', 'number');
     validate('extendOutputFunction', 'string');
     validate('proxyConfiguration', 'object');
-}
-
-function getProxyUrls(proxyConfiguration, needSess) {
-    const { useApifyProxy, proxyUrls = [], apifyProxyGroups } = proxyConfiguration;
-
-    // if no custom proxy is provided, set proxyUrls
-    if (proxyUrls.length === 0) {
-        if (!useApifyProxy) return undefined;
-
-        const proxyUrl = Apify.getApifyProxyUrl({
-            password: process.env.APIFY_PROXY_PASSWORD,
-            groups: apifyProxyGroups,
-            session: needSess ? Date.now().toString() : undefined,
-            country: PROXY_DEFAULT_COUNTRY,
-        });
-
-        proxyUrls.push(proxyUrl);
-    }
-
-    return proxyUrls;
 }
 
 function checkAndCreateUrlSource(startUrls) {
@@ -66,22 +43,16 @@ function checkAndCreateUrlSource(startUrls) {
         // if url is the homepage
         if (url === 'https://www2.hm.com/en_us/index.html') {
             sources.push({ url, userData: { label: 'HOMEPAGE' } });
-            log.info('HOMEPAGE', url);
-        }
-        // if product page
-        else if (url.includes('productpage') || /[0-9]{8,12}/.test(url)) {
+            log.info(`HOMEPAGE: ${url}`);
+        } else if (url.includes('productpage') || /[0-9]{8,12}/.test(url)) {
             sources.push({ url, userData: { label: 'PRODUCT' } });
-            log.info('PRODUCT', url);
-        }
-        // if sub-category page
-        else if (subcats.some(el => url.includes(el))) {
+            log.info(`PRODUCT: ${url}`);
+        } else if (subcats.some((el) => url.includes(el))) {
             sources.push({ url, userData: { label: 'SUBCAT' } });
-            log.info('SUBCAT', url);
-        }
-        // if top-level category
-        else if (url.replace(/http(s)?:\/\//, '').match(/\//g).length <= 2) {
+            log.info(`SUBCUT: ${url}`);
+        } else if (url.replace(/http(s)?:\/\//, '').match(/\//g).length <= 2) {
             sources.push({ url, userData: { label: 'MAINCAT' } });
-            log.info('MAINCAT', url);
+            log.info(`MAINCUT: ${url}`);
         } else {
             // unsupported or bad formatted urls get here.
             log.warning(
@@ -90,7 +61,6 @@ function checkAndCreateUrlSource(startUrls) {
             );
         }
     }
-
     return sources;
 }
 
@@ -104,22 +74,20 @@ function maxItemsCheck(maxItems, itemCount) {
 
 function checkAndEval(extendOutputFunction) {
     let evaledFunc;
-
     try {
+        // eslint-disable-next-line no-eval
         evaledFunc = eval(extendOutputFunction);
     } catch (e) {
         throw new Error(`extendOutputFunction is not a valid JavaScript! Error: ${e}`);
     }
-
     if (typeof evaledFunc !== 'function') {
         throw new Error('extendOutputFunction is not a function! Please fix it or use just default output!');
     }
-
     return evaledFunc;
 }
 
 async function applyFunction($, evaledFunc, item) {
-    const isObject = val => typeof val === 'object' && val !== null && !Array.isArray(val);
+    const isObject = (val) => typeof val === 'object' && val !== null && !Array.isArray(val);
 
     let userResult = {};
     try {
@@ -138,7 +106,6 @@ async function applyFunction($, evaledFunc, item) {
 
 module.exports = {
     validateInput,
-    getProxyUrls,
     checkAndCreateUrlSource,
     maxItemsCheck,
     checkAndEval,

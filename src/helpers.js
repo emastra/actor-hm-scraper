@@ -1,9 +1,7 @@
 const Apify = require('apify');
-
-const { log, requestAsBrowser, sleep } = Apify.utils;
-
 const { BASE_URL, PAGE_SIZE } = require('./constants');
 
+const { log, requestAsBrowser, sleep } = Apify.utils;
 
 function constructApiUrl(isViewAll, dataProductsUrl, productType) {
     let apiUrl;
@@ -17,8 +15,7 @@ function constructApiUrl(isViewAll, dataProductsUrl, productType) {
 async function getTotalNumOfProds(apiUrl, isViewAll, proxyUrls) {
     const res = await requestAsBrowser({
         url: `${apiUrl + (isViewAll ? '?' : '&')}page-size=${PAGE_SIZE}`,
-        abortFunction: false,
-        proxyUrl: proxyUrls ? proxyUrls[0] : undefined,
+        proxyUrl: proxyUrls ? proxyUrls.newUrl() : undefined,
         timeoutSecs: 180,
         ignoreSslErrors: true,
     });
@@ -37,8 +34,7 @@ async function getAllProductsByChunks(total, apiUrl, isViewAll, proxyUrls) {
 
         const res = await requestAsBrowser({
             url: `${apiUrl + (isViewAll ? '?' : '&')}offset=${offset}&page-size=${PAGE_SIZE}`,
-            abortFunction: false,
-            proxyUrl: proxyUrls ? proxyUrls[0] : undefined,
+            proxyUrl: proxyUrls ? proxyUrls.newUrl() : undefined,
             timeoutSecs: 180,
             ignoreSslErrors: true,
         });
@@ -112,8 +108,7 @@ async function getAvailabilityList(groupCode, proxyUrls, count = 0) {
     try {
         const { body } = await requestAsBrowser({
             url: `https://www2.hm.com/hmwebservices/service/product/us/availability/${groupCode}.json`,
-            abortFunction: false,
-            proxyUrl: proxyUrls ? proxyUrls[0] : undefined,
+            proxyUrl: proxyUrls ? proxyUrls.newUrl() : undefined,
             timeoutSecs: 180,
             ignoreSslErrors: true,
             json: true,

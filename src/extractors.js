@@ -1,8 +1,7 @@
 const Apify = require('apify');
+const { BASE_URL } = require('./constants');
 
 const { log } = Apify.utils;
-
-const { BASE_URL } = require('./constants');
 
 const {
     constructApiUrl,
@@ -12,7 +11,6 @@ const {
     getUtagData,
     getAvailabilityList,
 } = require('./helpers');
-
 
 async function enqueueMainCategories($, requestQueue) {
     const menuAnchors = $('ul.menu__primary').find('a.menu__super-link').toArray();
@@ -36,18 +34,14 @@ async function enqueueSubcategories($, requestQueue) {
     if (viewAllAnchor.length === 1) {
         await requestQueue.addRequest({
             url: BASE_URL + $(viewAllAnchor[0]).attr('href'),
-            forefront: true,
             userData: { label: 'SUBCAT' },
         });
-    }
-    // "sale" main-cat, "View All" are several
-    else {
+    } else {
         const anchors = viewAllAnchor;
 
         for (const anchor of anchors) {
             await requestQueue.addRequest({
                 url: BASE_URL + $(anchor).attr('href'),
-                forefront: true,
                 userData: { label: 'SUBCAT' },
             });
         }
@@ -90,8 +84,7 @@ async function extractSubcatPage($, request, proxyUrls) {
 async function extractProductPage($, request, proxyUrls, category = null) {
     // get productData
     const productData = getProductData($);
-    // get schema.org data
-    const schemaObject = JSON.parse($($('script[type="application/ld+json"]')[0]).text().trim());
+    const schemaObject = JSON.parse($($('script[type="application/ld+json"]')[0]).html().trim());
     // get utagData
     let utagData;
     if (!category) {
@@ -118,15 +111,17 @@ async function extractProductPage($, request, proxyUrls, category = null) {
     item.scrapedAt = new Date().toISOString();
     item.brand = schemaObject.brand.name.replace(/&amp;/g, '&');
     item.title = schemaObject.name;
-    item.categories = category ? category.split('_').map(s => s.toLowerCase()) : utagData.product_category[0].split('_').map(s => s.toLowerCase());
+    item.categories = category
+        ? category.split('_').map((s) => s.toLowerCase())
+        : utagData.product_category[0].split('_').map((s) => s.toLowerCase());
     item.description = product.description;
     item.composition = product.compositions ? product.compositions.join(', ') : null;
     item.price = product.whitePriceValue ? Number(product.whitePriceValue) : Number(product.promoMarkerLabelText.replace('$', ''));
     item.salePrice = product.redPriceValue ? Number(product.redPriceValue) : item.price;
     item.currency = schemaObject.offers[0].priceCurrency;
     item.color = product.name;
-    item.sizes = product.sizes.map(size => size.name).filter(name => name !== '');
-    item.availableSizes = product.sizes.filter(size => availability.includes(size.sizeCode)).map(size => size.name);
+    item.sizes = product.sizes.map((size) => size.name).filter((name) => name !== '');
+    item.availableSizes = product.sizes.filter((size) => availability.includes(size.sizeCode)).map((size) => size.name);
     item.images = product.images.map((o) => { return { url: `https:${o.image}` }; });
 
     return item;
