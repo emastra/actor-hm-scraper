@@ -15,7 +15,7 @@
       "type": "integer",
       "minimum": 0,
       "description": "Limit of product items to be scraped. Zero value means no limit.",
-      "prefill": 0
+      "prefill": 100
     },
     "extendOutputFunction": {
       "title": "Extend output function",
